@@ -12,6 +12,11 @@ extension.addBuildEventHandler("onPreBuild", () => {
   if (!process.env["SKUNKWORKS_NETLIFY_EXTENSION_ENABLED"]) {
     return;
   }
+});
+
+extension.addBuildEventHandler('onSuccess', ({ utils }) => {
+  console.log('Extension ran successfully. Checking if any files changed...');
+  
   // --- Configuration (mirrors Python script) ---
 const IGNORED_DIRS_FOR_NETLIFY_LINKS: Set<string> = new Set(['includes', 'images', 'examples'])
 // File extensions to consider when scanning for include directives
@@ -216,11 +221,6 @@ const onSuccess = async ({ utils, constants }: { utils: any; constants: any }) =
     }
 
     const directoryToScrape = process.cwd() // Assumes plugin runs from repo root
-    console.log(`Scanning directory: ${directoryToScrape} for include dependencies.`)
-    console.log(`Comparing base branch '${BRANCH}' with head '${HEAD}'.`)
-    if (netlifyDeployPrimeUrl) {
-        console.log(`Using Netlify Deploy URL for links: ${netlifyDeployPrimeUrl}`)
-    }
 
     try {
         const changedFilesFromGit = getChangedFiles(directoryToScrape, BRANCH, HEAD)
