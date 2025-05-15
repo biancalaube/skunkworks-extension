@@ -29,7 +29,8 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   const changedFiles = git.modifiedFiles || [];
   console.log("Changed files from git:", changedFiles);
 
-  const includesFolder = 'source/includes/';
+  // Adjusted includesFolder to match Netlify's file paths
+  const includesFolder = 'includes/';
   const impactedFilesMap: { [includeFile: string]: string[] } = {};
 
   for (const changedFile of changedFiles) {
@@ -95,7 +96,7 @@ function* walkSync(dir: string): Generator<string> {
 function createNetlifyMarkdownLink(fileRelPath: string, netlifyBaseUrl?: string): string {
   if (!netlifyBaseUrl) return fileRelPath;
 
-  let linkTargetPath = fileRelPath.replace(/^source\//, '').replace(/\.txt$|\.rst$/, '');
+  let linkTargetPath = fileRelPath.replace(/^includes\//, '').replace(/\.txt$|\.rst$/, '');
   if (!linkTargetPath.startsWith('/')) linkTargetPath = '/' + linkTargetPath;
 
   const finalNetlifyUrl = netlifyBaseUrl.replace(/\/$/, '') + linkTargetPath;
