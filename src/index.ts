@@ -1,22 +1,31 @@
 // Documentation: https://sdk.netlify.com/docs
-import { NetlifyExtension } from "@netlify/sdk";
 import path from 'path';
 import fs from 'fs';
+import { envVarToBool, Extension } from 'util/extension';
 
 
-const extension = new NetlifyExtension();
-
-extension.addBuildEventHandler("onPreBuild", () => {
-  // If the build event handler is not enabled, return early
-  if (!process.env["SKUNKWORKS_NETLIFY_EXTENSION_ENABLED"]) {
-    return;
-  }
+const extension = new Extension({
+  isEnabled: envVarToBool(process.env.GIT_CHANGED_FILES_ENABLED),
 });
 
-extension.addBuildEventHandler('onSuccess', async ({ utils, git, constants }) => {
-  console.log('Extension ran successfully. Checking if any files changed...');
+extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
+  console.log('Checking if any files changed on git -----');
+  console.log('Modified files:', git.modifiedFiles);
 
-  const { DEPLOY_PRIME_URL } = constants;
+  const DEPLOY_PRIME_URL = process.env.DEPLOY_PRIME_URL || '';
+  console.log('Netlify Deploy Prime URL:', DEPLOY_PRIME_URL);
+
+  // Check if git utilities are available
+  if (!git || !git.modifiedFiles) {
+    console.warn("Git utilities are not available. Skipping file change detection.");
+    status.show({
+      title: "Documentation Include Dependency Check",
+      summary: "Git utilities are not available.",
+      text: "The plugin could not detect changed files because Git utilities are unavailable in this environment.",
+    });
+    return;
+  }
+
   const netlifyDeployPrimeUrl = DEPLOY_PRIME_URL || '';
   const directoryToScrape = process.cwd();
 
@@ -62,7 +71,7 @@ extension.addBuildEventHandler('onSuccess', async ({ utils, git, constants }) =>
     markdownOutputLines.push("\nNo files impacted by changes to included content.");
   }
 
-  utils.status.show({
+  status.show({
     title: "Documentation Include Dependency Check",
     summary: "Processed include dependencies for changed files.",
     text: markdownOutputLines.join('\n'),
