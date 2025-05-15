@@ -10,10 +10,6 @@ const extension = new Extension({
 
 extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   console.log('Checking if any files changed on git -----');
-  console.log('Modified files:', git.modifiedFiles);
-
-  const DEPLOY_PRIME_URL = process.env.DEPLOY_PRIME_URL || '';
-  console.log('Netlify Deploy Prime URL:', DEPLOY_PRIME_URL);
 
   // Check if git utilities are available
   if (!git || !git.modifiedFiles) {
@@ -25,6 +21,9 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
     });
     return;
   }
+
+  const DEPLOY_PRIME_URL = process.env.DEPLOY_PRIME_URL || '';
+  console.log('Netlify Deploy Prime URL:', DEPLOY_PRIME_URL);
 
   const netlifyDeployPrimeUrl = DEPLOY_PRIME_URL || '';
   const directoryToScrape = process.cwd();
