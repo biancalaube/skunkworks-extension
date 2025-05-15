@@ -148,6 +148,7 @@ function resolveIncludeDependencies(changedFilesFromGit: string[], directory: st
 
     for (const currentFileAbsPath of walkSync(directory)) {
         const extractedIncludePaths = extractIncludeFiles(currentFileAbsPath)
+        console.log("Extracted include paths:", extractedIncludePaths);
         for (const includeDirectivePath of extractedIncludePaths) {
             let targetIncludeAbsPath = ""
             // Assuming Sphinx 'source' directory is at the root of 'directory' being scanned
@@ -220,7 +221,10 @@ const onSuccess = async ({ utils, constants }: { utils: any; constants: any }) =
         return utils.build.failPlugin("Error: HEAD environment variable (PR head ref) not set.")
     }
 
+    console.log("BRANCH:", BRANCH, "HEAD:", HEAD);
+
     const directoryToScrape = process.cwd() // Assumes plugin runs from repo root
+    console.log("Scanning directory:", directoryToScrape);
 
     try {
         const changedFilesFromGit = getChangedFiles(directoryToScrape, BRANCH, HEAD)
@@ -282,7 +286,7 @@ const onSuccess = async ({ utils, constants }: { utils: any; constants: any }) =
             summary: summaryMessage,
             text: markdownOutputLines.join('\n')
         })
-
+        console.log("Markdown output lines:", markdownOutputLines);
     } catch (error: any) {
         utils.build.failPlugin(`Error in Include Dependency Check plugin: ${error.message}`, { error })
     }
