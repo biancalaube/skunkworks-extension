@@ -1,9 +1,12 @@
 // Documentation: https://sdk.netlify.com/docs
 import path from 'path';
 import fs from 'fs';
-import { envVarToBool } from 'util/extension';
 import { NetlifyExtension } from "@netlify/sdk";
 
+// Helper function to convert environment variables to boolean
+function envVarToBool(value?: string): boolean {
+  return value === 'true';
+}
 
 const isEnabled = envVarToBool(process.env.GIT_CHANGED_FILES_ENABLED);
 
