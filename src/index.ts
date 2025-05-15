@@ -26,21 +26,23 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   const netlifyDeployPrimeUrl = DEPLOY_PRIME_URL || '';
   const directoryToScrape = process.cwd();
 
-  const changedFiles = git.modifiedFiles || [];
-  console.log("Changed files from git:", changedFiles);
+  const changedFiles = git.modifiedFiles.map((file: string) => file.replace(/^source\//, '')); // Normalize paths
+  console.log("Normalized changed files from git:", changedFiles);
 
-  // Adjusted includesFolder to match Netlify's file paths
   const includesFolder = 'includes/';
   const impactedFilesMap: { [includeFile: string]: string[] } = {};
 
   for (const changedFile of changedFiles) {
     if (changedFile.startsWith(includesFolder)) {
+      console.log(`Processing changed file: ${changedFile}`);
       const includeFilePath = path.join(directoryToScrape, changedFile);
 
       // Find files that include this changed file
       for (const filePath of walkSync(directoryToScrape)) {
         const content = fs.readFileSync(filePath, 'utf-8');
-        if (content.includes(`.. include:: ${changedFile}`) || content.includes(`.. literalinclude:: ${changedFile}`)) {
+        const normalizedIncludePath = `/${changedFile}`; // Add leading slash for comparison
+        if (content.includes(`.. include:: ${normalizedIncludePath}`) || content.includes(`.. literalinclude:: ${normalizedIncludePath}`)) {
+          console.log(`Found include in file: ${filePath}`);
           const relativeFilePath = path.relative(directoryToScrape, filePath);
           if (!impactedFilesMap[changedFile]) {
             impactedFilesMap[changedFile] = [];
