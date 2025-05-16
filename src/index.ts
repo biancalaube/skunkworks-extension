@@ -44,6 +44,11 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
           // console.log(`Skipping bundle file: ${filePath}`);
           continue;
         }
+        // Ignore files ending with ".bson"
+        if (filePath.endsWith('.bson')) {
+          // console.log(`Skipping .bson file: ${filePath}`);
+          continue;
+        }
 
         const content = fs.readFileSync(filePath, 'utf-8');
         const normalizedIncludePath = `/${changedFile}`; // Path in include directive e.g., /includes/file.rst
@@ -63,17 +68,20 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   const markdownOutputLines: string[] = [];
   markdownOutputLines.push("--- Files impacted by changes to included content ---");
 
-  for (const [includeFile, impactedFiles] of Object.entries(impactedFilesMap)) {
-    markdownOutputLines.push(`\n[Changed Include File]: ${includeFile}`);
-    markdownOutputLines.push("  Is included in:");
-    for (const impactedFile of impactedFiles) {
-      const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
-      markdownOutputLines.push(`${linkedImpactedFile}`);
+  if (Object.keys(impactedFilesMap).length > 0) {
+    for (const [includeFile, impactedFiles] of Object.entries(impactedFilesMap)) {
+      markdownOutputLines.push(""); // Add a blank line for separation
+      const includeFileText = includeFile || "UNKNOWN_OR_EMPTY_INCLUDE_FILE_PATH"; // Defensive check
+      markdownOutputLines.push(`[Changed Include File]: ${includeFileText}`);
+      markdownOutputLines.push("  Is included in:"); // Removed trailing \n here
+      for (const impactedFile of impactedFiles) {
+        const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
+        markdownOutputLines.push(`    - ${linkedImpactedFile}`);
+      }
     }
-  }
-
-  if (Object.keys(impactedFilesMap).length === 0) { // Check if the map is empty instead of markdownOutputLines.length
-    markdownOutputLines.push("\nNo files impacted by changes to included content.");
+  } else {
+    markdownOutputLines.push(""); // Add a blank line for separation
+    markdownOutputLines.push("No files impacted by changes to included content.");
   }
 
   status.show({
