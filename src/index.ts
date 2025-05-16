@@ -35,14 +35,20 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   for (const changedFile of changedFiles) {
     if (changedFile.startsWith(includesFolder)) {
       console.log(`Processing changed file: ${changedFile}`);
-      const includeFilePath = path.join(directoryToScrape, changedFile);
+      // const includeFilePath = path.join(directoryToScrape, changedFile); // Not strictly needed if changedFile is used for map key
 
       // Find files that include this changed file
       for (const filePath of walkSync(directoryToScrape)) {
+        // Ignore files starting with "bundle"
+        if (path.basename(filePath).startsWith('bundle')) {
+          // console.log(`Skipping bundle file: ${filePath}`);
+          continue;
+        }
+
         const content = fs.readFileSync(filePath, 'utf-8');
-        const normalizedIncludePath = `/${changedFile}`; // Add leading slash for comparison
+        const normalizedIncludePath = `/${changedFile}`; // Path in include directive e.g., /includes/file.rst
         if (content.includes(`.. include:: ${normalizedIncludePath}`) || content.includes(`.. literalinclude:: ${normalizedIncludePath}`)) {
-          console.log(`Found include in file: ${filePath}`);
+          console.log(`Found include of '${changedFile}' in file: ${filePath}`);
           const relativeFilePath = path.relative(directoryToScrape, filePath);
           if (!impactedFilesMap[changedFile]) {
             impactedFilesMap[changedFile] = [];
@@ -58,16 +64,15 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
   markdownOutputLines.push("--- Files impacted by changes to included content ---");
 
   for (const [includeFile, impactedFiles] of Object.entries(impactedFilesMap)) {
-    const linkedIncludeFile = createNetlifyMarkdownLink(includeFile, netlifyDeployPrimeUrl);
-    markdownOutputLines.push(`\n[Changed Include File]: ${linkedIncludeFile}`);
+    markdownOutputLines.push(`\n[Changed Include File]: ${includeFile}`);
     markdownOutputLines.push("  Is included in:");
     for (const impactedFile of impactedFiles) {
       const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
-      markdownOutputLines.push(`    - ${linkedImpactedFile}`);
+      markdownOutputLines.push(`${linkedImpactedFile}`);
     }
   }
 
-  if (markdownOutputLines.length === 1) {
+  if (Object.keys(impactedFilesMap).length === 0) { // Check if the map is empty instead of markdownOutputLines.length
     markdownOutputLines.push("\nNo files impacted by changes to included content.");
   }
 
@@ -98,10 +103,24 @@ function* walkSync(dir: string): Generator<string> {
 function createNetlifyMarkdownLink(fileRelPath: string, netlifyBaseUrl?: string): string {
   if (!netlifyBaseUrl) return fileRelPath;
 
-  let linkTargetPath = fileRelPath.replace(/^includes\//, '').replace(/\.txt$|\.rst$/, '');
-  if (!linkTargetPath.startsWith('/')) linkTargetPath = '/' + linkTargetPath;
+  let tempPath = fileRelPath;
+  // First, remove 'source/' prefix if it exists, for the link path
+  if (tempPath.startsWith('source/')) {
+    tempPath = tempPath.substring('source/'.length);
+  }
+  // Then, remove 'includes/' prefix if it exists (for include files themselves when they are linked)
+  tempPath = tempPath.replace(/^includes\//, '');
+
+  // Remove file extensions
+  let linkTargetPath = tempPath.replace(/\.txt$|\.rst$/, '');
+
+  // Ensure it starts with a slash
+  if (!linkTargetPath.startsWith('/')) {
+    linkTargetPath = '/' + linkTargetPath;
+  }
 
   const finalNetlifyUrl = netlifyBaseUrl.replace(/\/$/, '') + linkTargetPath;
+  // The link text [fileRelPath] will still show the original path like 'source/...' or 'includes/...'
   return `[${fileRelPath}](${finalNetlifyUrl})`;
 }
 
