@@ -75,8 +75,13 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
       markdownOutputLines.push(`Changed Include File: ${includeFileText}`);
       markdownOutputLines.push("  Is included in:");
       for (const impactedFile of impactedFiles) {
+        if (impactedFile.includes('/includes/')) {
+          markdownOutputLines.push(`\n${impactedFile}`); // Push filename directly
+        }
+        else {
         const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
         markdownOutputLines.push(`\n${linkedImpactedFile}`);
+        }
       }
     }
   } else {
