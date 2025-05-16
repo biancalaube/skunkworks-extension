@@ -72,7 +72,7 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
     for (const [includeFile, impactedFiles] of Object.entries(impactedFilesMap)) {
       markdownOutputLines.push(""); // Add a blank line for separation
       const includeFileText = includeFile || "UNKNOWN_OR_EMPTY_INCLUDE_FILE_PATH"; // Defensive check
-      markdownOutputLines.push("Changed Include File: ${includeFileText}");
+      markdownOutputLines.push(`Changed Include File: ${includeFileText}`);
       markdownOutputLines.push("  Is included in:");
       for (const impactedFile of impactedFiles) {
         const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
