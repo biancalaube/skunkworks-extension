@@ -73,10 +73,10 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
       markdownOutputLines.push(""); // Add a blank line for separation
       const includeFileText = includeFile || "UNKNOWN_OR_EMPTY_INCLUDE_FILE_PATH"; // Defensive check
       markdownOutputLines.push(`[Changed Include File]: ${includeFileText}`);
-      markdownOutputLines.push("  Is included in:"); // Removed trailing \n here
+      markdownOutputLines.push("  Is included in:");
       for (const impactedFile of impactedFiles) {
         const linkedImpactedFile = createNetlifyMarkdownLink(impactedFile, netlifyDeployPrimeUrl);
-        markdownOutputLines.push(`    - ${linkedImpactedFile}`);
+        markdownOutputLines.push(`\n${linkedImpactedFile}`);
       }
     }
   } else {
@@ -86,8 +86,7 @@ extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
 
   status.show({
     title: "Documentation Include Dependency Check",
-    summary: "Processed include dependencies for changed files.",
-    text: markdownOutputLines.join('\n'),
+    summary: markdownOutputLines.join('\n'),
   });
 
   console.log("Markdown output lines:", markdownOutputLines);
@@ -116,8 +115,6 @@ function createNetlifyMarkdownLink(fileRelPath: string, netlifyBaseUrl?: string)
   if (tempPath.startsWith('source/')) {
     tempPath = tempPath.substring('source/'.length);
   }
-  // Then, remove 'includes/' prefix if it exists (for include files themselves when they are linked)
-  tempPath = tempPath.replace(/^includes\//, '');
 
   // Remove file extensions
   let linkTargetPath = tempPath.replace(/\.txt$|\.rst$/, '');
