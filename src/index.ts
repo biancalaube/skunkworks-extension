@@ -7,6 +7,7 @@ import { NetlifyExtension } from "@netlify/sdk";
 const extension = new NetlifyExtension();
 
 extension.addBuildEventHandler('onSuccess', ({ utils: { status, git } }) => {
+  if (process.env.SKUNKWORKS_EXTENSION_ENABLED !== 'true') return
   console.log('Checking if any files changed on git -----');
 
   // Check if git utilities are available
